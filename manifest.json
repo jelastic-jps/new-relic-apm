@@ -23,7 +23,7 @@
 		"name": "New Relic APM",
 		"version": "3.6",
 		"homepage": "https://newrelic.com/",
-		"logo": "https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/images/newrelic_70x70.png",
+		"logo": "https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/images/newrelic_70x70.png",
 		"description": {
 			"short": "Monitor and troubleshoot your Java/PHP web apps",
 			"text": "New Relic Agent is a tool for the advanced monitoring of your Java or PHP app’s performance based on a number of application server metrics like response time, throughput, error rates, data transfer size, etc. It allows to gather and analyze the corresponding data within your New Relic account for diagnosing possible problems in your project's productivity and boosting its efficiency.<br><div style=\"margin-top:10px\">The New Relic add-on can be installed to Java and PHP web servers.</div>"
@@ -89,7 +89,7 @@
 						"nodeMission": "cp",
 						"user": "root",
 						"commands": [
-								"curl -fsSL \"https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/scripts/newRelicUpdate.sh\" -o /tmp/newrelicUpdateJava.sh &>> /var/log/newrelic.log",
+								"curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/scripts/newRelicUpdate.sh\" -o /tmp/newrelicUpdateJava.sh &>> /var/log/newrelic.log",
 								"bash /tmp/newrelicUpdateJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" &>> /var/log/newrelic.log"
 						]
 					}
@@ -112,7 +112,7 @@
 						"executeShellCommands": {
 							"nodeMission": "cp",
 							"commands": [
-									"curl -fsSL \"https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/scripts/uninstallJava.sh\" -o /tmp/uninstallJava.sh &>> /var/log/newrelic.log",
+									"curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/scripts/uninstallJava.sh\" -o /tmp/uninstallJava.sh &>> /var/log/newrelic.log",
 									"bash /tmp/uninstallJava.sh \"${SERVER_LIBS}\" &>> /var/log/newrelic.log"
 							],
 							"user": "root"
@@ -139,14 +139,14 @@
 						"executeShellCommands": [{
 								"nodeMission": "cp",
 								"commands": [
-										"if [ -z \"$(rpm -qa | grep newrelic-repo-5-3)\" ]; then rpm -Uvh https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/dumps/newrelic-repo-5-3.noarch.rpm &>> /var/log/newrelic.log; fi",
+										"if [ -z \"$(rpm -qa | grep newrelic-repo-5-3)\" ]; then rpm -Uvh https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/dumps/newrelic-repo-5-3.noarch.rpm &>> /var/log/newrelic.log; fi",
 										"if [ -z \"$(rpm -qa | grep newrelic-php5)\" ]; then yum -y install newrelic-php5; fi",
 										"if [ -z \"$(rpm -qa | grep newrelic-sysmond)\" ]; then yum -y install newrelic-sysmond; fi",
 										"nrsysmond-config --set license_key=${settings.license_key}",
 										"sed -ir \"s|.*disable_docker=.*|disable_docker=true|g\" /etc/newrelic/nrsysmond.cfg",
 										"/etc/init.d/newrelic-sysmond start",
-										"curl -fsSL \"https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/scripts/newRelicPHP.sh\" -o /usr/lib/newrelic-php5/newrelic-install.sh &>> /var/log/newrelic.log",
-										"curl -fsSL \"https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/dumps/newrelic.ini\" -o /tmp/newrelic.ini &>> /var/log/newrelic.log",
+										"curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/scripts/newRelicPHP.sh\" -o /usr/lib/newrelic-php5/newrelic-install.sh &>> /var/log/newrelic.log",
+										"curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/dumps/newrelic.ini\" -o /tmp/newrelic.ini &>> /var/log/newrelic.log",
 										"rm /etc/php.d/newrelic.ini",
 										"grep -q \"newrelic.so\" /etc/php.ini || cat /tmp/newrelic.ini &>> /etc/php.ini",
 										"grep -q \"newrelic.so\" /etc/php.ini && sed -ri \"s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g\"  /etc/php.ini",
@@ -164,7 +164,7 @@
 				"onCall": [{
 						"executeScript": {
 							"type": "js",
-							"script": "https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/scripts/checkEngineNodes.js"
+							"script": "https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/scripts/checkEngineNodes.js"
 						}
 					}
 				]
@@ -174,7 +174,7 @@
 						"executeShellCommands": [{
 								"nodeMission": "cp",
 								"commands": [
-										"curl -fsSL \"https://raw.githubusercontent.com/JelasticJPS/NewRelicAPM/master/scripts/NewRelicJavaNew.sh\" -o /tmp/newrelicJava.sh &>> /var/log/newrelic.log",
+										"curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/NewRelicAPM/master/scripts/NewRelicJavaNew.sh\" -o /tmp/newrelicJava.sh &>> /var/log/newrelic.log",
 										"bash /tmp/newrelicJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" &>> /var/log/newrelic.log"
 								],
 								"user": "root"
