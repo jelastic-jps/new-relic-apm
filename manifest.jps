@@ -4,12 +4,16 @@
   "application": {
     "targetNodes": {
       "nodeType": [
+        "apache",
         "apache2",
         "nginxphp",
+        "nginxphp-dockerized",
         "tomcat6",
         "tomcat7",
         "tomcat8",
+        "tomcat",
         "tomee",
+        "tomee-dockerized",
         "jetty6",
         "jetty8",
         "jetty9"
