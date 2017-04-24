@@ -49,7 +49,9 @@
           "name": "app_name",
           "caption": "Application name",
           "required": true,
-          "default": "${env.domain}"
+          "default": "${env.domain}",
+          "regex": "^[\\w-.]*$",
+ 					"regexText": "without special characters"
         },
         {
           "type": "string",
