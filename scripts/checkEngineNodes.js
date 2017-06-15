@@ -1,12 +1,11 @@
-import com.hivext.api.environment.Environment;
-
 var APPID = getParam("TARGET_APPID"),
     SESSION = getParam("session"),
     oEnvService,
     envInfoResponse,
     oActions,
     envEngine,
-    nodes;
+    nodes,
+    i;
 
 oActions = {
     "install": {
@@ -23,14 +22,24 @@ oActions = {
     }
 };
 
-oEnvService = hivext.local.exp.wrapRequest(new Environment(APPID, SESSION));
-envInfoResponse = oEnvService.getEnvInfo();
+oEnvService = jelastic.environment.control.GetEnvInfo(APPID, SESSION);
 
-if (!envInfoResponse.isOK()) {
-    return envInfoResponse;
+if (!oEnvService || oEnvService.result != 0) {
+    return oEnvService;
 }
 
-envEngine = toNative(envInfoResponse).env.engine.type;
+if (oEnvService.env.engine) {
+    envEngine = oEnvService.env.engine.type;
+} else {
+    if (oEnvService.nodes) {
+        for (i = 0; oEnvService.nodes[i]; i += 1) {
+            if (oEnvService.nodes[i].nodeGroup =='cp' && oEnvService.nodes[i].type == 'DOCKERIZED') {
+                envEngine = oEnvService.nodes[i].engineType;
+                break;
+            }
+        }
+    }
+}
 
 return {
     result: 0,
