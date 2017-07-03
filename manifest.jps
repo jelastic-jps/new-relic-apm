@@ -2,16 +2,18 @@
   "jpsType": "update",
   "jpsVersion": "0.5",
   "application": {
+    "id": "newrelic-apm",
     "targetNodes": {
       "nodeType": [
-        "apache",
+        "apache", 
         "apache2",
         "nginxphp",
         "nginxphp-dockerized",
+        "tomcat",
         "tomcat6",
         "tomcat7",
         "tomcat8",
-        "tomcat",
+        "tomcat9",
         "tomee",
         "tomee-dockerized",
         "jetty6",
@@ -49,7 +51,9 @@
           "name": "app_name",
           "caption": "Application name",
           "required": true,
-          "default": "${env.domain}"
+          "default": "${env.domain}",
+          "regex": "^[\\w-.]*$",
+          "regexText": "without special characters"
         },
         {
           "type": "string",
@@ -101,8 +105,8 @@
             "nodeMission": "cp",
             "user": "root",
             "commands": [
-              "curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicUpdate.sh\" -o /tmp/newrelicUpdateJava.sh &>> /var/log/newrelic.log",
-              "bash /tmp/newrelicUpdateJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" &>> /var/log/newrelic.log"
+              "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicUpdate.sh' -o /tmp/newrelicUpdateJava.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+              "bash /tmp/newrelicUpdateJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log"
             ]
           }
         }
@@ -114,8 +118,8 @@
             "nodeMission": "cp",
             "user": "root",
             "commands": [
-              "yum update -y newrelic-php5 &>>/var/log/newrelic.log",
-              "if [ echo `pidof newrelic-daemon` != \"\" ]; then echo a 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; else killall -9 newrelic-daemon &>> /var/log/newrelic.log; fi"
+              "yum update --nogpgcheck -y newrelic-php5 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+              "if [ `pidof -s newrelic-daemon` != \"\" ]; then echo a &>>/var/log/newrelic.log; else killall -9 newrelic-daemon 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi"
             ]
           }
         }
@@ -127,8 +131,8 @@
             "executeShellCommands": {
               "nodeMission": "cp",
               "commands": [
-                "curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/uninstallJava.sh\" -o /tmp/uninstallJava.sh &>> /var/log/newrelic.log",
-                "bash /tmp/uninstallJava.sh \"${SERVER_LIBS}\" &>> /var/log/newrelic.log"
+                "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/uninstallJava.sh' -o /tmp/uninstallJava.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+                "bash /tmp/uninstallJava.sh \"${SERVER_LIBS}\" 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log"
               ],
               "user": "root"
             }
@@ -143,7 +147,7 @@
               {
                 "nodeMission": "cp",
                 "commands": [
-                  "yum -y remove newrelic*",
+                  "yum --nogpgcheck -y remove newrelic*",
                   "sed -ir \"s|.*newrelic.*||g\" /etc/php.ini"
                 ],
                 "user": "root"
@@ -158,22 +162,21 @@
           {
             "executeShellCommands": [
               {
-                "nodeMission": "cp",
+                "nodeGroup": "cp",
                 "commands": [
-                  "if [ -z \"$(rpm -qa | grep newrelic-repo-5-3)\" ]; then rpm -Uvh https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic-repo-5-3.noarch.rpm &>> /var/log/newrelic.log; fi",
-                  "if [ -z \"$(rpm -qa | grep newrelic-php5)\" ]; then yum -y install newrelic-php5; fi",
-                  "if [ -z \"$(rpm -qa | grep newrelic-sysmond)\" ]; then yum -y install newrelic-sysmond; fi",
+                  "if [ -z \"$(rpm -qa | grep newrelic-repo-5-3)\" ]; then rpm -Uvh https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic-repo-5-3.noarch.rpm 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
+                  "if [ -z \"$(rpm -qa | grep newrelic-php5)\" ]; then yum --nogpgcheck -y install newrelic-php5 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
+                  "if [ -z \"$(rpm -qa | grep newrelic-sysmond)\" ]; then yum --nogpgcheck -y install newrelic-sysmond 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
                   "nrsysmond-config --set license_key=${settings.license_key}",
                   "sed -ir \"s|.*disable_docker=.*|disable_docker=true|g\" /etc/newrelic/nrsysmond.cfg",
-                  "/etc/init.d/newrelic-sysmond start",
-                  "curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicPHP.sh\" -o /usr/lib/newrelic-php5/newrelic-install.sh &>> /var/log/newrelic.log",
-                  "curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic.ini\" -o /tmp/newrelic.ini &>> /var/log/newrelic.log",
-                  "rm /etc/php.d/newrelic.ini",
+                  "/etc/init.d/newrelic-sysmond start 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+                  "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicPHP.sh' -o /usr/lib/newrelic-php5/newrelic-install.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+                  "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic.ini' -o /tmp/newrelic.ini 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
                   "grep -q \"newrelic.so\" /etc/php.ini || cat /tmp/newrelic.ini &>> /etc/php.ini",
                   "grep -q \"newrelic.so\" /etc/php.ini && sed -ri \"s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g\"  /etc/php.ini",
-                  "grep -q \"newrelic.so\" /etc/php.ini && sed -ri \"s|PHP Application|${settings.app_name}|g\" /etc/php.ini ",
-                  "bash /usr/bin/newrelic-install &>> /var/log/newrelic.log",
-                  "rm /etc/php.d/newrelic.ini"
+                  "grep -q \"newrelic.so\" /etc/php.ini && sed -ri \"s|PHP Application|${settings.app_name}|g\" /etc/php.ini",
+                  "bash /usr/bin/newrelic-install 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+                  "rm -rf /etc/php.d/newrelic.ini"
                 ],
                 "user": "root"
               }
@@ -200,8 +203,8 @@
               {
                 "nodeMission": "cp",
                 "commands": [
-                  "curl -fsSL \"https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/NewRelicJavaNew.sh\" -o /tmp/newrelicJava.sh &>> /var/log/newrelic.log",
-                  "bash /tmp/newrelicJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" &>> /var/log/newrelic.log"
+                  "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/NewRelicJavaNew.sh' -o /tmp/newrelicJava.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
+                  "bash /tmp/newrelicJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log"
                 ],
                 "user": "root"
               }
