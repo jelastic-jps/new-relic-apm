@@ -11,6 +11,7 @@ This repository provides [New Relic APM](https://newrelic.com/about/) add-on for
 - Tomcat 6
 - Tomcat 7
 - Tomcat 8
+- Tomcat 9
 - Tomee
 - Jetty 6
 - Jetty 8
