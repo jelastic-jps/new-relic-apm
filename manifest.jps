@@ -7,6 +7,9 @@
       "nodeType": [
         "apache", 
         "apache2",
+        "litespeedphp",
+        "lemp",
+        "llsmp",
         "nginxphp",
         "nginxphp-dockerized",
         "tomcat",
