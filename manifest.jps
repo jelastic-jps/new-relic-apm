@@ -7,6 +7,9 @@
       "nodeType": [
         "apache", 
         "apache2",
+        "litespeedphp",
+        "lemp",
+        "llsmp",
         "nginxphp",
         "nginxphp-dockerized",
         "tomcat",
@@ -148,7 +151,8 @@
                 "nodeMission": "cp",
                 "commands": [
                   "yum --nogpgcheck -y remove newrelic*",
-                  "sed -ir \"s|.*newrelic.*||g\" /etc/php.ini"
+                  "echo \"php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
+                  "source /tmp/php_conf && sed -ir \"s|.*newrelic.*||g\" $php_ini"
                 ],
                 "user": "root"
               }
@@ -164,6 +168,8 @@
               {
                 "nodeGroup": "cp",
                 "commands": [
+                  "echo \"php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
+                  "echo \"php_add_dir=`php -i | grep 'Scan this dir for additional' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
                   "if [ -z \"$(rpm -qa | grep newrelic-repo-5-3)\" ]; then rpm -Uvh https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic-repo-5-3.noarch.rpm 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
                   "if [ -z \"$(rpm -qa | grep newrelic-php5)\" ]; then yum --nogpgcheck -y install newrelic-php5 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
                   "if [ -z \"$(rpm -qa | grep newrelic-sysmond)\" ]; then yum --nogpgcheck -y install newrelic-sysmond 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
@@ -172,11 +178,11 @@
                   "/etc/init.d/newrelic-sysmond start 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
                   "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicPHP.sh' -o /usr/lib/newrelic-php5/newrelic-install.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
                   "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic.ini' -o /tmp/newrelic.ini 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "grep -q \"newrelic.so\" /etc/php.ini || cat /tmp/newrelic.ini &>> /etc/php.ini",
-                  "grep -q \"newrelic.so\" /etc/php.ini && sed -ri \"s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g\"  /etc/php.ini",
-                  "grep -q \"newrelic.so\" /etc/php.ini && sed -ri \"s|PHP Application|${settings.app_name}|g\" /etc/php.ini",
+                  "source /tmp/php_conf && grep -q \"newrelic.so\" $php_ini || cat /tmp/newrelic.ini &>> $php_ini",
+                  "source /tmp/php_conf && grep -q \"newrelic.so\" $php_ini && sed -ri \"s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g\" $php_ini",
+                  "source /tmp/php_conf && grep -q \"newrelic.so\" $php_ini && sed -ri \"s|PHP Application|${settings.app_name}|g\" $php_ini",
                   "bash /usr/bin/newrelic-install 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "rm -rf /etc/php.d/newrelic.ini"
+                  "rm -rf $php_add_dir/newrelic.ini"
                 ],
                 "user": "root"
               }
