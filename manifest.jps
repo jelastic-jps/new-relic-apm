@@ -151,6 +151,7 @@
                 "nodeMission": "cp",
                 "commands": [
                   "yum --nogpgcheck -y remove newrelic*",
+                  "echo \"php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
                   "source /tmp/php_conf && sed -ir \"s|.*newrelic.*||g\" $php_ini"
                 ],
                 "user": "root"
