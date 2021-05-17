@@ -1,224 +1,122 @@
-{
-  "jpsType": "update",
-  "jpsVersion": "0.5",
-  "application": {
-    "id": "newrelic-apm",
-    "targetNodes": {
-      "nodeType": [
-        "apache", 
-        "apache2",
-        "litespeedphp",
-        "lemp",
-        "llsmp",
-        "nginxphp",
-        "nginxphp-dockerized",
-        "tomcat",
-        "tomcat6",
-        "tomcat7",
-        "tomcat8",
-        "tomcat9",
-        "tomee",
-        "tomee-dockerized",
-        "jetty6",
-        "jetty8",
-        "jetty9"
-      ]
-    },
-    "categories": [
-      "apps/dev-tools",
-      "apps/popular",
-      "apps/management-and-monitoring",
-      "apps/dev-and-admin-tools"
-    ],
-    "name": "New Relic APM",
-    "version": "3.6",
-    "homepage": "https://newrelic.com/",
-    "logo": "https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/images/newrelic_70x70.png",
-    "description": {
-      "short": "Monitor and troubleshoot your Java/PHP web apps",
-      "text": "New Relic Agent is a tool for the advanced monitoring of your Java or PHP app’s performance based on a number of application server metrics like response time, throughput, error rates, data transfer size, etc. It allows to gather and analyze the corresponding data within your New Relic account for diagnosing possible problems in your project's productivity and boosting its efficiency.<br><div style=\"margin-top:10px\">The New Relic add-on can be installed to Java and PHP web servers.</div>"
-    },
-    "menu": [
-      {
-        "caption": "Update Agent",
-        "procedure": "updateAgent",
-        "confirmText": "This option will check for the New Relic Agent updates. Would you like to continue?",
-        "successText": "The New Relic add-on was updated. Please, restart your web server instance for the changes to be applied.",
-        "loadingText": "Performing NewRelic update..."
-      }
-    ],
-    "settings": {
-      "fields": [
-        {
-          "type": "string",
-          "name": "app_name",
-          "caption": "Application name",
-          "required": true,
-          "default": "${env.domain}",
-          "regex": "^[\\w-.]*$",
-          "regexText": "without special characters"
-        },
-        {
-          "type": "string",
-          "name": "license_key",
-          "caption": "License key",
-          "vtype": "alphanum",
-          "vtypeText": "Alphanumeric input only.",
-          "required": true,
-          "default": "0000000000000000000000000000000000000000"
-        }
-      ]
-    },
-    "onInstall": {
-      "call": [
-        {
-          "procedure": "checkEngine",
-          "params": {
-            "action": "install"
-          }
-        }
-      ]
-    },
-    "onUninstall": {
-      "call": {
-        "procedure": "checkEngine",
-        "params": {
-          "action": "uninstall"
-        }
-      }
-    },
-    "procedures": [
-      {
-        "id": "updateAgent",
-        "onCall": [
-          {
-            "call": {
-              "procedure": "checkEngine",
-              "params": {
-                "action": "update"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "id": "updateJavaAgent",
-        "onCall": {
-          "executeShellCommands": {
-            "nodeMission": "cp",
-            "user": "root",
-            "commands": [
-              "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicUpdate.sh' -o /tmp/newrelicUpdateJava.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-              "bash /tmp/newrelicUpdateJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log"
-            ]
-          }
-        }
-      },
-      {
-        "id": "updatePhpAgent",
-        "onCall": {
-          "executeShellCommands": {
-            "nodeMission": "cp",
-            "user": "root",
-            "commands": [
-              "yum update --nogpgcheck -y newrelic-php5 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-              "if [ `pidof -s newrelic-daemon` != \"\" ]; then echo a &>>/var/log/newrelic.log; else killall -9 newrelic-daemon 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi"
-            ]
-          }
-        }
-      },
-      {
-        "id": "uninstallJavaAgent",
-        "onCall": [
-          {
-            "executeShellCommands": {
-              "nodeMission": "cp",
-              "commands": [
-                "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/uninstallJava.sh' -o /tmp/uninstallJava.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                "bash /tmp/uninstallJava.sh \"${SERVER_LIBS}\" 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log"
-              ],
-              "user": "root"
-            }
-          }
-        ]
-      },
-      {
-        "id": "uninstallPhpAgent",
-        "onCall": [
-          {
-            "executeShellCommands": [
-              {
-                "nodeMission": "cp",
-                "commands": [
-                  "yum --nogpgcheck -y remove newrelic*",
-                  "echo \"php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
-                  "source /tmp/php_conf && sed -ir \"s|.*newrelic.*||g\" $php_ini"
-                ],
-                "user": "root"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "installPhpAgent",
-        "onCall": [
-          {
-            "executeShellCommands": [
-              {
-                "nodeGroup": "cp",
-                "commands": [
-                  "echo \"php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
-                  "echo \"php_add_dir=`php -i | grep 'Scan this dir for additional' | grep -oP '(?<=\\=\\>\\s).*'`\" >> /tmp/php_conf",
-                  "if [ -z \"$(rpm -qa | grep newrelic-repo-5-3)\" ]; then rpm -Uvh https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic-repo-5-3.noarch.rpm 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
-                  "if [ -z \"$(rpm -qa | grep newrelic-php5)\" ]; then yum --nogpgcheck -y install newrelic-php5 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
-                  "if [ -z \"$(rpm -qa | grep newrelic-sysmond)\" ]; then yum --nogpgcheck -y install newrelic-sysmond 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log; fi",
-                  "nrsysmond-config --set license_key=${settings.license_key}",
-                  "sed -ir \"s|.*disable_docker=.*|disable_docker=true|g\" /etc/newrelic/nrsysmond.cfg",
-                  "/etc/init.d/newrelic-sysmond start 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/newRelicPHP.sh' -o /usr/lib/newrelic-php5/newrelic-install.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/dumps/newrelic.ini' -o /tmp/newrelic.ini 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "source /tmp/php_conf && grep -q \"newrelic.so\" $php_ini || cat /tmp/newrelic.ini &>> $php_ini",
-                  "source /tmp/php_conf && grep -q \"newrelic.so\" $php_ini && sed -ri \"s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g\" $php_ini",
-                  "source /tmp/php_conf && grep -q \"newrelic.so\" $php_ini && sed -ri \"s|PHP Application|${settings.app_name}|g\" $php_ini",
-                  "bash /usr/bin/newrelic-install 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "rm -rf $php_add_dir/newrelic.ini"
-                ],
-                "user": "root"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "checkEngine",
-        "onCall": [
-          {
-            "executeScript": {
-              "type": "js",
-              "script": "https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/checkEngineNodes.js"
-            }
-          }
-        ]
-      },
-      {
-        "id": "installJavaAgent",
-        "onCall": [
-          {
-            "executeShellCommands": [
-              {
-                "nodeMission": "cp",
-                "commands": [
-                  "curl -fsSL 'https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master/scripts/NewRelicJavaNew.sh' -o /tmp/newrelicJava.sh 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log",
-                  "bash /tmp/newrelicJava.sh \"${SERVER_LIBS}\" \"${settings.license_key}\" \"${settings.app_name}\" 1>>/var/log/newrelic.log 2>>/var/log/newrelic.log"
-                ],
-                "user": "root"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "success": "The installation has been successfully completed. Please, restart your web server instance to apply the changes.</br>After that, you can navigate to your New Relic control panel</a> and explore your app's performance data. <a href='http://newrelic.com/product/' target='_blank'><u>More info</u></a><br>Refer to the <a href='https://docs.newrelic.com/docs/apm/new-relic-apm/troubleshooting'><u>Troubleshooting</u></a> guide in case you face any issues with New Relic APM usage or installation."
-  }
-}
+type: update
+jpsVersion: 0.5
+id: newrelic-apm
+targetNodes:
+  nodeType:
+  - apache
+  - apache2
+  - litespeedphp
+  - lemp
+  - llsmp
+  - nginxphp
+  - nginxphp-dockerized
+  - tomcat
+  - tomcat6
+  - tomcat7
+  - tomcat8
+  - tomcat9
+  - tomee
+  - tomee-dockerized
+  - jetty6
+  - jetty8
+  - jetty9
+categories:
+- apps/dev-tools
+- apps/popular
+- apps/management-and-monitoring
+- apps/dev-and-admin-tools
+name: New Relic APM
+version: 3.6
+homepage: https://newrelic.com/
+baseUrl: https://raw.githubusercontent.com/jelastic-jps/newrelic-apm/master
+logo: /images/newrelic_70x70.png
+description:
+  short: Monitor and troubleshoot your Java/PHP web apps
+  text: New Relic Agent is a tool for the advanced monitoring of your Java or PHP
+    app’s performance based on a number of application server metrics like response
+    time, throughput, error rates, data transfer size, etc. It allows to gather and
+    analyze the corresponding data within your New Relic account for diagnosing possible
+    problems in your project's productivity and boosting its efficiency.<br><div style="margin-top:10px">The
+    New Relic add-on can be installed to Java and PHP web servers.</div>
+menu:
+- caption: Update Agent
+  procedure: updateAgent
+  confirmText: This option will check for the New Relic Agent updates. Would you like to continue?
+  successText: The New Relic add-on was updated. Please, restart your web server instance for the changes to be applied.
+  loadingText: Performing NewRelic update...
+settings:
+  fields:
+  - type: string
+    name: app_name
+    caption: Application name
+    required: true
+    default: "${env.domain}"
+    regex: "^[\\w-.]*$"
+    regexText: without special characters
+  - type: string
+    name: license_key
+    caption: License key
+    vtype: alphanum
+    vtypeText: Alphanumeric input only.
+    required: true
+    default: '0000000000000000000000000000000000000000'
+onInstall:
+  checkEngine:
+    action: install
+onUninstall:
+  checkEngine:
+    action: uninstall
+actions:
+  updateAgent: 
+    checkEngine:
+      action: update
+  updateJavaAgent:
+    cmd[cp]: |-
+      curl -fsSL '${baseUrl}/scripts/newRelicUpdate.sh' -o /tmp/newrelicUpdateJava.sh >> /var/log/newrelic.log 2>&1
+      bash /tmp/newrelicUpdateJava.sh "${SERVER_LIBS}" "${settings.license_key}" "${settings.app_name}" >> /var/log/newrelic.log 2>&1
+    user: root
+  updatePhpAgent:
+    cmd[cp]: |-
+      yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1
+      newrelic_pid=$(pidof -s newrelic-daemon);
+      [[ ! -z $newrelic_pid ]] && killall -9 newrelic-daemon || echo "newrelic-daemon is absent";
+    user: root
+  uninstallJavaAgent:
+    cmd[cp]: |-
+      curl -fsSL '${baseUrl}/scripts/uninstallJava.sh' -o /tmp/uninstallJava.sh >> /var/log/newrelic.log 2>&1
+      bash /tmp/uninstallJava.sh "${SERVER_LIBS}" >> /var/log/newrelic.log 2>&1
+    user: root
+  uninstallPhpAgent:
+    cmd[cp]: |-
+      yum --nogpgcheck -y remove newrelic*
+      echo "php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
+      source /tmp/php_conf && sed -ir "s|.*newrelic.*||g" $php_ini
+    user: root
+  installPhpAgent:
+    cmd[cp]: |-
+      echo "php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
+      echo "php_add_dir=`php -i | grep 'Scan this dir for additional' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
+      if [ -z "$(rpm -qa | grep newrelic-repo-5-3)" ]; then rpm -Uvh ${baseUrl}/dumps/newrelic-repo-5-3.noarch.rpm >> /var/log/newrelic.log 2>&1; fi
+      if [ -z "$(rpm -qa | grep newrelic-php5)" ]; then yum --nogpgcheck -y install newrelic-php5 >> /var/log/newrelic.log 2>&1; fi
+      if [ -z "$(rpm -qa | grep newrelic-sysmond)" ]; then yum --nogpgcheck -y install newrelic-sysmond >> /var/log/newrelic.log 2>&1; fi
+      nrsysmond-config --set license_key=${settings.license_key}
+      sed -ir "s|.*disable_docker=.*|disable_docker=true|g" /etc/newrelic/nrsysmond.cfg
+      /etc/init.d/newrelic-sysmond start >> /var/log/newrelic.log 2>&1
+      curl -fsSL '${baseUrl}/scripts/newRelicPHP.sh' -o /usr/lib/newrelic-php5/newrelic-install.sh >> /var/log/newrelic.log 2>&1
+      curl -fsSL '${baseUrl}/dumps/newrelic.ini' -o /tmp/newrelic.ini >> /var/log/newrelic.log 2>&1
+      source /tmp/php_conf && grep -q "newrelic.so" $php_ini || cat /tmp/newrelic.ini &>> $php_ini
+      source /tmp/php_conf && grep -q "newrelic.so" $php_ini && sed -ri "s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g" $php_ini
+      source /tmp/php_conf && grep -q "newrelic.so" $php_ini && sed -ri "s|PHP Application|${settings.app_name}|g" $php_ini
+      bash /usr/bin/newrelic-install >> /var/log/newrelic.log 2>&1
+      rm -rf $php_add_dir/newrelic.ini
+    user: root
+  checkEngine:
+    script: /scripts/checkEngineNodes.js
+  installJavaAgent:
+    cmd[cp]: |-
+      curl -fsSL '${baseUrl}/scripts/NewRelicJavaNew.sh' -o /tmp/newrelicJava.sh >> /var/log/newrelic.log 2>&1
+      bash /tmp/newrelicJava.sh "${SERVER_LIBS}" "${settings.license_key}" "${settings.app_name}" >> /var/log/newrelic.log 2>&1
+    user: root
+success: The installation has been successfully completed. Please, restart your web server instance to apply the changes.  
+  After that, you can navigate to your New Relic control panel and explore your app's performance data. **[More info](http://newrelic.com/product/)**  
+  Refer to the **[Troubleshooting](https://docs.newrelic.com/docs/apm/new-relic-apm/troubleshooting)** guide in case you face any issues with New Relic APM usage or installation.
