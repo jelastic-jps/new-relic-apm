@@ -70,48 +70,51 @@ actions:
   updateAgent: 
     checkEngine:
       action: update
+
   updateJavaAgent:
     cmd[cp]: |-
       curl -fsSL '${baseUrl}/scripts/newRelicUpdate.sh' -o /tmp/newrelicUpdateJava.sh >> /var/log/newrelic.log 2>&1
       bash /tmp/newrelicUpdateJava.sh "${SERVER_LIBS}" "${settings.license_key}" "${settings.app_name}" >> /var/log/newrelic.log 2>&1
     user: root
+
   updatePhpAgent:
     cmd[cp]: |-
       yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1
       newrelic_pid=$(pidof -s newrelic-daemon);
       [[ ! -z $newrelic_pid ]] && killall -9 newrelic-daemon || echo "newrelic-daemon is absent";
     user: root
+
   uninstallJavaAgent:
     cmd[cp]: |-
       curl -fsSL '${baseUrl}/scripts/uninstallJava.sh' -o /tmp/uninstallJava.sh >> /var/log/newrelic.log 2>&1
       bash /tmp/uninstallJava.sh "${SERVER_LIBS}" >> /var/log/newrelic.log 2>&1
     user: root
+
   uninstallPhpAgent:
     cmd[cp]: |-
       yum --nogpgcheck -y remove newrelic*
       echo "php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
       source /tmp/php_conf && sed -ir "s|.*newrelic.*||g" $php_ini
     user: root
+
   installPhpAgent:
-    cmd[cp]: |-
-      echo "php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
-      echo "php_add_dir=`php -i | grep 'Scan this dir for additional' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
-      if [ -z "$(rpm -qa | grep newrelic-repo-5-3)" ]; then rpm -Uvh ${baseUrl}/dumps/newrelic-repo-5-3.noarch.rpm >> /var/log/newrelic.log 2>&1; fi
+    cmd [cp]: |-
+      if [ -z "$(rpm -qa | grep newrelic-repo-5-3)" ]; then rpm -Uvh http://yum.newrelic.com/pub/newrelic/el5/i386/newrelic-repo-5-3.noarch.rpm >> /var/log/newrelic.log 2>&1; fi
       if [ -z "$(rpm -qa | grep newrelic-php5)" ]; then yum --nogpgcheck -y install newrelic-php5 >> /var/log/newrelic.log 2>&1; fi
-      if [ -z "$(rpm -qa | grep newrelic-sysmond)" ]; then yum --nogpgcheck -y install newrelic-sysmond >> /var/log/newrelic.log 2>&1; fi
-      nrsysmond-config --set license_key=${settings.license_key}
-      sed -ir "s|.*disable_docker=.*|disable_docker=true|g" /etc/newrelic/nrsysmond.cfg
-      /etc/init.d/newrelic-sysmond start >> /var/log/newrelic.log 2>&1
-      curl -fsSL '${baseUrl}/scripts/newRelicPHP.sh' -o /usr/lib/newrelic-php5/newrelic-install.sh >> /var/log/newrelic.log 2>&1
-      curl -fsSL '${baseUrl}/dumps/newrelic.ini' -o /tmp/newrelic.ini >> /var/log/newrelic.log 2>&1
-      source /tmp/php_conf && grep -q "newrelic.so" $php_ini || cat /tmp/newrelic.ini &>> $php_ini
-      source /tmp/php_conf && grep -q "newrelic.so" $php_ini && sed -ri "s|REPLACE_WITH_REAL_KEY|${settings.license_key}|g" $php_ini
-      source /tmp/php_conf && grep -q "newrelic.so" $php_ini && sed -ri "s|PHP Application|${settings.app_name}|g" $php_ini
-      bash /usr/bin/newrelic-install >> /var/log/newrelic.log 2>&1
-      rm -rf $php_add_dir/newrelic.ini
+      NRBASEDIR=/usr/lib/newrelic-php5; export NRBASEDIR
+      MODULEDIR=/usr/lib64/php/modules; export MODULEDIR
+      ARCH=x64; export ARCH
+      PHPAPI=$(php -i | grep "PHP API" | awk '{print $4}'); export PHPAPI
+      PHPZTS="-zts"; export PHPZTS
+      rm -f $MODULEDIR/newrelic.so
+      ln -s $NRBASEDIR/agent/$ARCH/newrelic-${PHPAPI}${PHPZTS}.so $MODULEDIR/newrelic.so
+      export NR_INSTALL_KEY="${settings.license_key}" && export NR_INSTALL_SILENT=true && /usr/bin/newrelic-install install
+      sed -i 's|newrelic.appname = \"PHP Application\"|newrelic.appname = \"${settings.app_name}\"|g' /etc/php.d/newrelic.ini
     user: root
+
   checkEngine:
     script: /scripts/checkEngineNodes.js
+
   installJavaAgent:
     cmd[cp]: |-
       curl -fsSL '${baseUrl}/scripts/NewRelicJavaNew.sh' -o /tmp/newrelicJava.sh >> /var/log/newrelic.log 2>&1
