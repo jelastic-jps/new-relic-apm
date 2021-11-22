@@ -66,6 +66,15 @@ onInstall:
 onUninstall:
   checkEngine:
     action: uninstall
+onAfterClone:
+  checkEngine:
+    action: install
+onAfterRedeployContainer:
+  checkEngine:
+    action: install
+onAfterAddNode:
+  checkEngine:
+    action: install
 actions:
   updateAgent: 
     checkEngine:
