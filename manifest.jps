@@ -66,39 +66,48 @@ onInstall:
 onUninstall:
   checkEngine:
     action: uninstall
+onAfterClone:
+  checkEngine:
+    action: install
+onAfterRedeployContainer:
+  checkEngine:
+    action: install
+onAfterAddNode:
+  checkEngine:
+    action: install
 actions:
   updateAgent: 
     checkEngine:
       action: update
 
   updateJavaAgent:
-    cmd[cp]: |-
+    cmd[${targetNodes.nodeGroup}]: |-
       curl -fsSL '${baseUrl}/scripts/newRelicUpdate.sh' -o /tmp/newrelicUpdateJava.sh >> /var/log/newrelic.log 2>&1
       bash /tmp/newrelicUpdateJava.sh "${SERVER_LIBS}" "${settings.license_key}" "${settings.app_name}" >> /var/log/newrelic.log 2>&1
     user: root
 
   updatePhpAgent:
-    cmd[cp]: |-
+    cmd[${targetNodes.nodeGroup}]: |-
       yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1
       newrelic_pid=$(pidof -s newrelic-daemon);
       [[ ! -z $newrelic_pid ]] && killall -9 newrelic-daemon || echo "newrelic-daemon is absent";
     user: root
 
   uninstallJavaAgent:
-    cmd[cp]: |-
+    cmd[${targetNodes.nodeGroup}]: |-
       curl -fsSL '${baseUrl}/scripts/uninstallJava.sh' -o /tmp/uninstallJava.sh >> /var/log/newrelic.log 2>&1
       bash /tmp/uninstallJava.sh "${SERVER_LIBS}" >> /var/log/newrelic.log 2>&1
     user: root
 
   uninstallPhpAgent:
-    cmd[cp]: |-
+    cmd[${targetNodes.nodeGroup}]: |-
       yum --nogpgcheck -y remove newrelic*
       echo "php_ini=`php -i | grep 'Loaded Configuration File' | grep -oP '(?<=\=\>\s).*'`" >> /tmp/php_conf
       source /tmp/php_conf && sed -ir "s|.*newrelic.*||g" $php_ini
     user: root
 
   installPhpAgent:
-    cmd [cp]: |-
+    cmd [${targetNodes.nodeGroup}]: |-
       if [ -z "$(rpm -qa | grep newrelic-repo-5-3)" ]; then rpm -Uvh http://yum.newrelic.com/pub/newrelic/el5/i386/newrelic-repo-5-3.noarch.rpm >> /var/log/newrelic.log 2>&1; fi
       if [ -z "$(rpm -qa | grep newrelic-php5)" ]; then yum --nogpgcheck -y install newrelic-php5 >> /var/log/newrelic.log 2>&1; fi
       NRBASEDIR=/usr/lib/newrelic-php5; export NRBASEDIR
@@ -120,7 +129,7 @@ actions:
     script: /scripts/checkEngineNodes.js
 
   installJavaAgent:
-    cmd[cp]: |-
+    cmd[${targetNodes.nodeGroup}]: |-
       curl -fsSL '${baseUrl}/scripts/NewRelicJavaNew.sh' -o /tmp/newrelicJava.sh >> /var/log/newrelic.log 2>&1
       bash /tmp/newrelicJava.sh "${SERVER_LIBS}" "${settings.license_key}" "${settings.app_name}" >> /var/log/newrelic.log 2>&1
     user: root
