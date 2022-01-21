@@ -17,9 +17,7 @@ targetNodes:
   - tomcat9
   - tomee
   - tomee-dockerized
-  - jetty6
-  - jetty8
-  - jetty9
+  - jetty
 categories:
 - apps/dev-tools
 - apps/popular
