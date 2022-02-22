@@ -1,6 +1,9 @@
 type: update
 jpsVersion: 0.5
 id: newrelic-apm
+
+targetEditions: any
+
 targetNodes:
   nodeType:
   - apache
