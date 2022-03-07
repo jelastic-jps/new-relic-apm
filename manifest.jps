@@ -124,6 +124,7 @@ actions:
       ln -s $NRBASEDIR/agent/$ARCH/newrelic-${PHPAPI}${PHPZTS}.so $MODULEDIR/newrelic.so
       export NR_INSTALL_KEY="${settings.license_key}" && export NR_INSTALL_SILENT=true && /usr/bin/newrelic-install install
       sed -i 's|newrelic.appname = \"PHP Application\"|newrelic.appname = \"${settings.app_name}\"|g' $PHPINIDIR/newrelic.ini
+      sed -i 's|newrelic.license = ".*"|newrelic.license = "${settings.license_key}"|g' $PHPINIDIR/newrelic.ini
     user: root
 
   checkEngine:
