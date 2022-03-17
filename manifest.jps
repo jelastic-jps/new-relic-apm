@@ -75,14 +75,6 @@ onUninstall:
   checkEngine:
     action: uninstall
 
-onAfterClone:
-  install: ${baseUrl}/manifest.jps?_r=${fn.random}
-  envName: ${event.response.env.envName}
-  nodeGroup: ${targetNodes.nodeGroup}
-  settings:
-    app_name: ${event.response.env.envName}
-    license_key: ${settings.license_key}
-
 onAfterRedeployContainer:
   checkEngine:
     action: install
