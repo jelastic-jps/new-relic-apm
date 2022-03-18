@@ -2,7 +2,7 @@ type: update
 jpsVersion: 0.5
 id: newrelic-apm
 
-targetEditions: any
+targetEditions: [ "devops", "wordpress", "lite_do", "lite_vultr", "lite_gc", "ultimate", "light", "business" ]
 
 targetNodes:
   nodeType:
