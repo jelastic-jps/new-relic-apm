@@ -144,5 +144,5 @@ actions:
     user: root
 
 success: The installation has been successfully completed. Please, restart your web server instance to apply the changes.  
-  After that, you can navigate to your New Relic control panel and explore your app's performance data. **[More info](http://newrelic.com/product/)**  
-  Refer to the **[Troubleshooting](https://docs.newrelic.com/docs/apm/new-relic-apm/troubleshooting)** guide in case you face any issues with New Relic APM usage or installation.
+  After that, you can navigate to your New Relic control panel and explore your app's performance data. **[More info](https://newrelic.com/platform/application-monitoring)**  
+  Refer to the **[Troubleshooting](https://docs.newrelic.com/docs/new-relic-solutions/solve-common-issues/troubleshooting/not-seeing-data)** guide in case you face any issues with New Relic APM usage or installation.
