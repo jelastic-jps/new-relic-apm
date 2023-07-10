@@ -29,7 +29,7 @@ logo: /images/newrelic_70x70.png
 
 description:
   short: Monitor and troubleshoot your Java web apps
-  text: New Relic Agent is a tool for the advanced monitoring of your Java or PHP
+  text: New Relic Agent is a tool for the advanced monitoring of your Java
     app’s performance based on a number of application server metrics like response
     time, throughput, error rates, data transfer size, etc. It allows to gather and
     analyze the corresponding data within your New Relic account for diagnosing possible
