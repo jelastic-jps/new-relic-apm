@@ -97,8 +97,10 @@ actions:
   updatePhpAgent:
     cmd[${targetNodes.nodeGroup}]: |-
       PHPVER=$(php -v  | grep "^PHP" | awk '{print $2}' | awk -F. '{print $1"."$2}');
-      PHPZTS=$(php -i | grep "\-\-enable\-zts" -q; if [ $? -eq 0 ]; then echo "-zts"; fi); export PHPZTS;
-      if (( $(echo "$PHPVER 8.2" | awk '{print ($1 < $2)}') )); then yum --nogpgcheck -y install newrelic-php5-9.19.0.309-1 >> /var/log/newrelic.log 2>&1; else yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1; fi
+      PHPZTS=$(php -i | grep "\-\-enable\-zts" -q; if [ $? -eq 0 ]; then echo "-zts"; fi);
+      NEWRELICVER="newrelic-php5";
+      if (( $(echo "$PHPVER 8.2" | awk '{print ($1 < $2)}') )); then if [ ! -z "$PHPZTS" ]; then NEWRELICVER="newrelic-php5-9.19.0.309-1"; fi; fi; 
+      if [ "$NEWRELICVER" == "newrelic-php5"]; then yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1; else yum --nogpgcheck -y install $NEWRELICVER >> /var/log/newrelic.log 2>&1; fi
       newrelic_pid=$(pidof -s newrelic-daemon);
       [[ ! -z $newrelic_pid ]] && killall -9 newrelic-daemon || echo "newrelic-daemon is absent";
     user: root
