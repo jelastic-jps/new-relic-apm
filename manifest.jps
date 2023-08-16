@@ -96,7 +96,9 @@ actions:
 
   updatePhpAgent:
     cmd[${targetNodes.nodeGroup}]: |-
-      yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1
+      PHPVER=$(php -v  | grep "^PHP" | awk '{print $2}' | awk -F. '{print $1"."$2}');
+      PHPZTS=$(php -i | grep "\-\-enable\-zts" -q; if [ $? -eq 0 ]; then echo "-zts"; fi); export PHPZTS;
+      if (( $(echo "$PHPVER 8.2" | awk '{print ($1 < $2)}') )); then yum --nogpgcheck -y install newrelic-php5-9.19.0.309-1 >> /var/log/newrelic.log 2>&1; else yum update --nogpgcheck -y newrelic-php5 >> /var/log/newrelic.log 2>&1; fi
       newrelic_pid=$(pidof -s newrelic-daemon);
       [[ ! -z $newrelic_pid ]] && killall -9 newrelic-daemon || echo "newrelic-daemon is absent";
     user: root
@@ -115,24 +117,31 @@ actions:
     user: root
 
   installPhpAgent:
-    cmd [${targetNodes.nodeGroup}]: |-
-      if [ -z "$(rpm -qa | grep newrelic-repo-5-3)" ]; then rpm -Uvh http://yum.newrelic.com/pub/newrelic/el5/i386/newrelic-repo-5-3.noarch.rpm >> /var/log/newrelic.log 2>&1; fi
-      if [ -z "$(rpm -qa | grep newrelic-php5)" ]; then yum --nogpgcheck -y install newrelic-php5 >> /var/log/newrelic.log 2>&1; fi
-      NRBASEDIR=/usr/lib/newrelic-php5; export NRBASEDIR
-      MODULEDIR=/usr/lib64/php/modules;
-      [ ! -d $MODULEDIR ] && MODULEDIR="/usr/local/lsws/lsphp/lib64/php/modules/";
-      PHPINIDIR="/etc/php.d/"
-      [ ! -d $PHPINIDIR ] && PHPINIDIR="/usr/local/lsws/lsphp/etc/php.d/"
-      export MODULEDIR
-      ARCH=x64; export ARCH
-      PHPAPI=$(php -i | grep "PHP API" | awk '{print $4}'); export PHPAPI
-      PHPZTS="-zts"; export PHPZTS
-      rm -f $MODULEDIR/newrelic.so
-      ln -s $NRBASEDIR/agent/$ARCH/newrelic-${PHPAPI}${PHPZTS}.so $MODULEDIR/newrelic.so
-      export NR_INSTALL_KEY="${settings.license_key}" && export NR_INSTALL_SILENT=true && /usr/bin/newrelic-install install
-      sed -i 's|newrelic.appname = \"PHP Application\"|newrelic.appname = \"${settings.app_name}\"|g' $PHPINIDIR/newrelic.ini
-      sed -i 's|newrelic.license = ".*"|newrelic.license = "${settings.license_key}"|g' $PHPINIDIR/newrelic.ini
-    user: root
+    - cmd [${targetNodes.nodeGroup}]: |-
+        PHPVER=$(php -v  | grep "^PHP" | awk '{print $2}' | awk -F. '{print $1"."$2}');
+        PHPZTS=$(php -i | grep "\-\-enable\-zts" -q; if [ $? -eq 0 ]; then echo "-zts"; fi); export PHPZTS;
+        if (( $(echo "$PHPVER 8.1" | awk '{print ($1 > $2)}') )); then if [ ! -z "$PHPZTS" ]; then echo "Issue: Newrelic can't be installed on this node because ZTS is enabled and the PHP version is higher than 8.1 (the last zts supported version by Newrelic)"; exit 0; fi; fi;
+        if (( $(echo "$PHPVER 8.2" | awk '{print ($1 < $2)}') )); then NEWRELICVER="newrelic-php5-9.19.0.309-1"; else NEWRELICVER="newrelic-php5"; fi
+        if [ -z "$(rpm -qa | grep newrelic-repo-5-3)" ]; then rpm -Uvh http://yum.newrelic.com/pub/newrelic/el5/i386/newrelic-repo-5-3.noarch.rpm >> /var/log/newrelic.log 2>&1; fi
+        if [ -z "$(rpm -qa | grep newrelic-php5)" ]; then yum --nogpgcheck -y install $NEWRELICVER >> /var/log/newrelic.log 2>&1; fi
+        NRBASEDIR=/usr/lib/newrelic-php5; export NRBASEDIR
+        MODULEDIR=/usr/lib64/php/modules;
+        [ ! -d $MODULEDIR ] && MODULEDIR="/usr/local/lsws/lsphp/lib64/php/modules/";
+        PHPINIDIR="/etc/php.d/"
+        [ ! -d $PHPINIDIR ] && PHPINIDIR="/usr/local/lsws/lsphp/etc/php.d/"
+        export MODULEDIR
+        ARCH=x64; export ARCH
+        PHPAPI=$(php -i | grep "PHP API" | awk '{print $4}'); export PHPAPI
+        rm -f $MODULEDIR/newrelic.so
+        ln -s $NRBASEDIR/agent/$ARCH/newrelic-${PHPAPI}${PHPZTS}.so $MODULEDIR/newrelic.so
+        export NR_INSTALL_KEY="${settings.license_key}" && export NR_INSTALL_SILENT=true && /usr/bin/newrelic-install install
+        sed -i 's|newrelic.appname = \"PHP Application\"|newrelic.appname = \"${settings.app_name}\"|g' $PHPINIDIR/newrelic.ini
+        sed -i 's|newrelic.license = ".*"|newrelic.license = "${settings.license_key}"|g' $PHPINIDIR/newrelic.ini
+      user: root
+    - if (response.out.indexOf("Issue") !== -1):
+        message:  ${response.out}
+        script: |
+          return {"result": "info", message: message.replace(/\n/g, '  \n')}
 
   checkEngine:
     script: /scripts/checkEngineNodes.js
