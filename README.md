@@ -3,11 +3,9 @@
 
 This repository provides [New Relic APM](https://newrelic.com/about/) add-on for Jelastic Platform
 
-**New Relic APM** is a tool for the advanced monitoring of your Java or PHP app’s performance based on a number of application server metrics like response time, throughput, error rates, data transfer size, etc.
+**New Relic APM** is a tool for the advanced monitoring of your Java app’s performance based on a number of application server metrics like response time, throughput, error rates, data transfer size, etc.
 
 **Type of nodes this add-on can be applied to**: 
-- Apache 2
-- Nginx PHP
 - Tomcat 6
 - Tomcat 7
 - Tomcat 8
