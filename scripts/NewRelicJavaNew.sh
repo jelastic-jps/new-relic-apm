@@ -4,7 +4,7 @@ SERVER_PATH="/opt/tomcat/"
 LICENSE_KEY=$2
 APP_NAME=$3
 USER="tomcat"
-NEWRELIC_ZIP="https://download.jelastic.com/public.php?service=files&t=daca831d32710933b9013349f6e64ce4&download"
+NEWRELIC_ZIP="https://download.jelastic.com/public.php?service=files&t=624c58fe3c9419e312552cc89d065fbe&download"
 VARIABLES_CONF="/opt/tomcat/conf/variables.conf"
 
 [ -f "/etc/jelastic/environment" ] && source /etc/jelastic/environment
